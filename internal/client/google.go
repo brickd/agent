@@ -1,8 +1,11 @@
 package client
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"io/ioutil"
 	"time"
 )
 
@@ -31,6 +34,26 @@ func GoogleClientID(projectID, region, registryID, gatewayId string) string {
 		"projects/%s/locations/%s/registries/%s/devices/%s",
 		projectID, region, registryID, gatewayId,
 	)
+}
+
+func GoogleTLSConfig(rootca string) *tls.Config {
+	certpool := x509.NewCertPool()
+	pemCerts, err := ioutil.ReadFile(rootca)
+	if err != nil {
+		panic(err)
+	}
+	certpool.AppendCertsFromPEM(pemCerts)
+
+	tlsConfig := &tls.Config{
+		RootCAs:            certpool,
+		ClientAuth:         tls.NoClientCert,
+		ClientCAs:          nil,
+		InsecureSkipVerify: true,
+		Certificates:       []tls.Certificate{},
+		MinVersion:         tls.VersionTLS12,
+	}
+
+	return tlsConfig
 }
 
 func GoogleMqttTopic(deviceId, messageType string) string {

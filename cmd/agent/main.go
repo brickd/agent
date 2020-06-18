@@ -71,7 +71,7 @@ func main() {
 	listedConfig, _ := json.MarshalIndent(viper.AllSettings(), "", "  ")
 	L.Infof("Starting gateway with configuration: %s", listedConfig)
 
-	c := client.NewMqtt(
+	mqttClient := client.NewClient(
 		L.WithField("Component", "MQTT Client"),
 		viper.GetString(ProjectKey),
 		viper.GetString(RegionKey),
@@ -81,7 +81,17 @@ func main() {
 		viper.GetString(RootCAKey),
 	)
 
-	if err = c.Run(ctx); err != nil {
+	err = mqttClient.Connect(ctx)
+	if err != nil {
+		L.Error("An error occured during mqtt client connection: ", err)
+	}
+
+	gateway := client.NewGateway(
+		L.WithField("Component", "Gateway"),
+		mqttClient,
+	)
+
+	if err = gateway.RunHTTP(ctx); err != nil {
 		panic(err)
 	}
 }
