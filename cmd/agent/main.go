@@ -22,15 +22,15 @@ const (
 	GatewayKey     = "gateway"
 	GatewayDefault = ""
 
-	PrivateKeyPathKey     = "pkey"
-	PrivateKeyPathDefault = "./cert/rsa_private.pem"
+	PrivateKeyKey     = "privateKey"
+	PrivateKeyDefault = ""
 
 	RootCAKey     = "rootkey"
-	RootCADefault = "./cert/roots.pem"
+	RootCADefault = "roots.pem"
 )
 
 const (
-	LogLevelDefault = "info"
+	LogLevelDefault = "debug"
 	LogLevelKey     = "log.level"
 )
 
@@ -40,12 +40,21 @@ func init() {
 	viper.SetDefault(RegistryKey, RegistryDefault)
 
 	viper.SetDefault(GatewayKey, GatewayDefault)
-	viper.SetDefault(PrivateKeyPathKey, PrivateKeyPathDefault)
+	viper.SetDefault(PrivateKeyKey, PrivateKeyDefault)
 	viper.SetDefault(RootCAKey, RootCADefault)
 
 	viper.SetDefault(LogLevelKey, LogLevelDefault)
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	viper.SetConfigName("device")
+	viper.SetConfigType("json")
+	viper.AddConfigPath(".")
+
+	if err := viper.ReadInConfig(); err != nil {
+		panic(err)
+	}
+
 	viper.AutomaticEnv()
 }
 
@@ -63,17 +72,16 @@ func main() {
 	L.Infof("Starting gateway with configuration: %s", listedConfig)
 
 	c := client.NewMqtt(
+		L.WithField("Component", "MQTT Client"),
 		viper.GetString(ProjectKey),
 		viper.GetString(RegionKey),
 		viper.GetString(RegistryKey),
 		viper.GetString(GatewayKey),
-		viper.GetString(PrivateKeyPathKey),
+		viper.GetString(PrivateKeyKey),
 		viper.GetString(RootCAKey),
 	)
 
-	go func() {
-		c.Run(ctx)
-	}()
-
-	<-ctx.Done()
+	if err = c.Run(ctx); err != nil {
+		panic(err)
+	}
 }

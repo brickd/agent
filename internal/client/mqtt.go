@@ -4,10 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"github.com/spf13/viper"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"time"
 )
@@ -17,6 +15,8 @@ const (
 )
 
 type Mqtt struct {
+	*logrus.Entry
+
 	project  string
 	region   string
 	registry string
@@ -28,8 +28,9 @@ type Mqtt struct {
 
 type MqttOptionsFunc func(m *Mqtt)
 
-func NewMqtt(project, region, registry, gateway string, pkey, rootca string, opts ...MqttOptionsFunc) *Mqtt {
+func NewMqtt(L *logrus.Entry, project, region, registry, gateway string, pkey, rootca string, opts ...MqttOptionsFunc) *Mqtt {
 	m := &Mqtt{
+		Entry:    L,
 		project:  project,
 		region:   region,
 		registry: registry,
@@ -45,28 +46,37 @@ func NewMqtt(project, region, registry, gateway string, pkey, rootca string, opt
 	return m
 }
 
-func (m *Mqtt) Run(ctx context.Context) {
+func (m *Mqtt) Run(ctx context.Context) error {
+	if err := m.Connect(ctx); err != nil {
+		return err
+	}
 
+	<-ctx.Done()
+	return nil
 }
 
-func (m *Mqtt) Connect() error {
+func (m *Mqtt) Connect(ctx context.Context) error {
+	gPassword, err := GoogleMQTTPassword(m.project, m.pkey)
+	if err != nil {
+		return err
+	}
+
+	gClientID := GoogleClientID(
+		m.project,
+		m.region,
+		m.registry,
+		m.gateway,
+	)
+
 	opts := mqtt.NewClientOptions().
 		AddBroker(MQTTConnectionDefault).
 		SetTLSConfig(getTLSConfig(
 			m.rootca,
 		)).
 		SetProtocolVersion(4).
-		SetClientID(getClientID(
-			viper.GetString(m.project),
-			viper.GetString(m.region),
-			viper.GetString(m.registry),
-			viper.GetString(m.gateway),
-		)).
+		SetClientID(gClientID).
 		SetUsername("unused").
-		SetPassword(getJWT(
-			m.project,
-			m.pkey,
-		)).
+		SetPassword(gPassword).
 		SetOnConnectHandler(m.onConnect).
 		SetDefaultPublishHandler(m.onMessage).
 		SetConnectionLostHandler(m.onDisconnect).
@@ -75,8 +85,10 @@ func (m *Mqtt) Connect() error {
 	c := mqtt.NewClient(opts)
 	token := c.Connect()
 	if token.Wait() && token.Error() != nil {
-		panic(token.Error())
+		return token.Error()
 	}
+
+	return nil
 }
 
 func (m *Mqtt) onConnect(client mqtt.Client) {
@@ -109,37 +121,4 @@ func getTLSConfig(rootca string) *tls.Config {
 	}
 
 	return tlsConfig
-}
-
-func getJWT(projectId, pkey string) string {
-	bb, err := ioutil.ReadFile(pkey)
-	if err != nil {
-		panic(err)
-	}
-
-	signKey, err := jwt.ParseRSAPrivateKeyFromPEM(bb)
-	if err != nil {
-		panic(err)
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &jwt.StandardClaims{
-		Audience:  projectId,
-		ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
-		IssuedAt:  time.Now().Unix(),
-	})
-
-	tokenString, err := token.SignedString(signKey)
-	if err != nil {
-		panic(err)
-	}
-
-	return tokenString
-}
-
-func getClientID(projectID, region, registryID, gatewayId string) string {
-	return fmt.Sprintf(
-		"projects/%s/locations/%s/registries/%s/devices/%s",
-		projectID, region, registryID, gatewayId,
-	)
-
 }

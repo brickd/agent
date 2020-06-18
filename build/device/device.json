@@ -1,0 +1,7 @@
+{
+  "project": "brickd",
+  "region": "europe-west1",
+  "registry": "demo-0",
+  "gateway": "demo-ha1A_-lF",
+  "privateKey": ""
+}
