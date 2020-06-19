@@ -61,21 +61,21 @@ func GoogleMqttTopic(deviceId, messageType string) string {
 }
 
 func GoogleMqttEventsTopic(deviceId string) string {
-	return fmt.Sprintf("/devices/%s/%s/events", deviceId, "events")
+	return GoogleMqttTopic(deviceId, "events")
 }
 
 func GoogleMqttAttachTopic(deviceId string) string {
-	return fmt.Sprintf("/devices/%s/%s/events", deviceId, "attach")
+	return GoogleMqttTopic(deviceId, "attach")
 }
 
 func GoogleMqttDetachTopic(deviceId string) string {
-	return fmt.Sprintf("/devices/%s/%s/events", deviceId, "detach")
+	return GoogleMqttTopic(deviceId, "detach")
 }
 
 func GoogleMqttCommandsTopic(deviceId string) string {
-	return fmt.Sprintf("/devices/%s/%s/commands/#", deviceId, "commands")
+	return GoogleMqttTopic(deviceId, "commands/#")
 }
 
 func GoogleMqttConfigTopic(deviceId string) string {
-	return fmt.Sprintf("/devices/%s/%s/events", deviceId, "config")
+	return GoogleMqttTopic(deviceId, "config")
 }
