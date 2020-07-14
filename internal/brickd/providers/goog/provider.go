@@ -74,6 +74,38 @@ func (m *Conn) Publish(msg []byte) error {
 	return PublishEvent(m.client, m.gatewayID, msg)
 }
 
-func (m *Conn) PublishAs(deviceId string, msg []byte) error {
-	return PublishEvent(m.client, deviceId, msg)
+func (m *Conn) PublishAs(deviceID string, msg []byte) error {
+	return PublishEvent(m.client, deviceID, msg)
+}
+
+func (m *Conn) Attach(deviceID string) error {
+	return AttachDevice(m.client, deviceID)
+}
+
+func (m *Conn) Detach(deviceID string) error {
+	return DetachDevice(m.client, deviceID)
+}
+
+func (m *Conn) SetState(state []byte) error {
+	return SetDeviceState(m.client, m.gatewayID, state)
+}
+
+func (m *Conn) SetStateAs(deviceID string, state []byte) error {
+	return SetDeviceState(m.client, deviceID, state)
+}
+
+func (m *Conn) WatchConfig(ctx context.Context, configs chan<- []byte) error {
+	return WatchDeviceConfig(ctx, m.client, m.gatewayID, configs)
+}
+
+func (m *Conn) WatchConfigAs(ctx context.Context, deviceID string, configs chan<- []byte) error {
+	return WatchDeviceConfig(ctx, m.client, deviceID, configs)
+}
+
+func (m *Conn) WatchCommands(ctx context.Context, commands chan<- []byte) error {
+	return WatchDeviceCommands(ctx, m.client, m.gatewayID, commands)
+}
+
+func (m *Conn) WatchCommandsAs(ctx context.Context, deviceID string, commands chan<- []byte) error {
+	return WatchDeviceCommands(ctx, m.client, deviceID, commands)
 }

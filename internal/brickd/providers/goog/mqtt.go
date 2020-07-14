@@ -1,6 +1,7 @@
 package goog
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -84,7 +85,7 @@ func GoogleMqttAttachTopic(deviceId string) string {
 	return GoogleMqttTopic(deviceId, "attach")
 }
 
-func GoogleAttachDevice(c mqtt.Client, deviceId string) error {
+func AttachDevice(c mqtt.Client, deviceId string) error {
 	token := c.Publish(
 		GoogleMqttAttachTopic(deviceId),
 		1,
@@ -99,13 +100,13 @@ func GoogleAttachDevice(c mqtt.Client, deviceId string) error {
 	return nil
 }
 
-func GoogleMqttDetachTopic(deviceId string) string {
-	return GoogleMqttTopic(deviceId, "detach")
+func GoogleMqttDetachTopic(deviceID string) string {
+	return GoogleMqttTopic(deviceID, "detach")
 }
 
-func GoogleDetachDevice(c mqtt.Client, deviceId string) error {
+func DetachDevice(c mqtt.Client, deviceID string) error {
 	token := c.Publish(
-		GoogleMqttDetachTopic(deviceId),
+		GoogleMqttDetachTopic(deviceID),
 		1,
 		false,
 		"{}",
@@ -118,10 +119,53 @@ func GoogleDetachDevice(c mqtt.Client, deviceId string) error {
 	return nil
 }
 
-func GoogleMqttCommandsTopic(deviceId string) string {
-	return GoogleMqttTopic(deviceId, "commands/#")
+func GoogleMqttStateTopic(deviceID string) string {
+	return GoogleMqttTopic(deviceID, "state")
 }
 
-func GoogleMqttConfigTopic(deviceId string) string {
-	return GoogleMqttTopic(deviceId, "config")
+func SetDeviceState(c mqtt.Client, deviceID string, state []byte) error {
+	token := c.Publish(
+		GoogleMqttStateTopic(deviceID),
+		1,
+		false,
+		state,
+	)
+
+	if token.WaitTimeout(time.Second*5) == false || token.Error() != nil {
+		return token.Error()
+	}
+
+	return nil
+}
+
+func GoogleMqttCommandsTopic(deviceID string) string {
+	return GoogleMqttTopic(deviceID, "commands/#")
+}
+
+func WatchDeviceCommands(ctx context.Context, c mqtt.Client, deviceID string, commands chan<- []byte) error {
+	token := c.Subscribe(GoogleMqttCommandsTopic(deviceID), 0, func(client mqtt.Client, m mqtt.Message) {
+		commands <- m.Payload()
+	})
+
+	if token.WaitTimeout(time.Second*5) == false || token.Error() != nil {
+		return token.Error()
+	}
+
+	return nil
+}
+
+func GoogleMqttConfigTopic(deviceID string) string {
+	return GoogleMqttTopic(deviceID, "config")
+}
+
+func WatchDeviceConfig(ctx context.Context, c mqtt.Client, deviceID string, configs chan<- []byte) error {
+	token := c.Subscribe(GoogleMqttConfigTopic(deviceID), 1, func(client mqtt.Client, m mqtt.Message) {
+		configs <- m.Payload()
+	})
+
+	if token.WaitTimeout(time.Second*5) == false || token.Error() != nil {
+		return token.Error()
+	}
+
+	return nil
 }
