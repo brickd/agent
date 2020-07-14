@@ -6,6 +6,7 @@ import (
 	"github.com/brickd/agent/internal/brickd"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"time"
 )
 
@@ -46,6 +47,18 @@ func NewConn(L *logrus.Entry, projectId, region, registryID, gatewayID, pkeyPath
 		TLSConfig: tlsConf,
 		gatewayID: gatewayID,
 	}, nil
+}
+
+func NewConnFromConfig(L *logrus.Entry) (brickd.Conn, error) {
+	return NewConn(
+		L,
+		viper.GetString(GCPProjectIDKey),
+		viper.GetString(RegionKey),
+		viper.GetString(RegistryKey),
+		viper.GetString(GatewayKey),
+		viper.GetString(PrivateKeyKey),
+		viper.GetString(RootCAKey),
+	)
 }
 
 func (m *Conn) Connect(ctx context.Context) error {

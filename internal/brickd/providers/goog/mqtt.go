@@ -144,7 +144,13 @@ func GoogleMqttCommandsTopic(deviceID string) string {
 
 func WatchDeviceCommands(ctx context.Context, c mqtt.Client, deviceID string, commands chan<- []byte) error {
 	token := c.Subscribe(GoogleMqttCommandsTopic(deviceID), 0, func(client mqtt.Client, m mqtt.Message) {
-		commands <- m.Payload()
+		select {
+		case commands <- m.Payload():
+		default:
+			// unsubscribe from the topic if the channel is closed
+			c.Unsubscribe(GoogleMqttCommandsTopic(deviceID))
+			return
+		}
 	})
 
 	if token.WaitTimeout(time.Second*5) == false || token.Error() != nil {
@@ -160,7 +166,13 @@ func GoogleMqttConfigTopic(deviceID string) string {
 
 func WatchDeviceConfig(ctx context.Context, c mqtt.Client, deviceID string, configs chan<- []byte) error {
 	token := c.Subscribe(GoogleMqttConfigTopic(deviceID), 1, func(client mqtt.Client, m mqtt.Message) {
-		configs <- m.Payload()
+		select {
+		case configs <- m.Payload():
+		default:
+			// unsubscribe from the topic if the channel is closed
+			c.Unsubscribe(GoogleMqttConfigTopic(deviceID))
+			return
+		}
 	})
 
 	if token.WaitTimeout(time.Second*5) == false || token.Error() != nil {
