@@ -1,7 +1,8 @@
-package client
+package httpgateway
 
 import (
 	"context"
+	"github.com/brickd/agent/internal/brickd"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
@@ -10,10 +11,10 @@ import (
 type Gateway struct {
 	*logrus.Entry
 
-	client *Client
+	client brickd.Conn
 }
 
-func NewGateway(l *logrus.Entry, client *Client) *Gateway {
+func New(l *logrus.Entry, client brickd.Conn) *Gateway {
 	return &Gateway{
 		Entry:  l,
 		client: client,
@@ -36,7 +37,7 @@ func (g *Gateway) RunHTTP(ctx context.Context) error {
 			return
 		}
 
-		err = g.client.PublishAsGateway(bb)
+		err = g.client.Publish(bb)
 		if err != nil {
 			g.Error("An error occured when publishing message:", err)
 		}

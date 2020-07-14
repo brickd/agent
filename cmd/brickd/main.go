@@ -3,7 +3,8 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"github.com/brickd/agent/internal/client"
+	"github.com/brickd/agent/internal/brickd/httpgateway"
+	"github.com/brickd/agent/internal/brickd/providers/goog"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"strings"
@@ -19,7 +20,7 @@ const (
 	RegistryKey     = "registry"
 	RegistryDefault = ""
 
-	GatewayKey     = "gateway"
+	GatewayKey     = "httpgateway"
 	GatewayDefault = ""
 
 	PrivateKeyKey     = "privateKey"
@@ -47,8 +48,9 @@ func init() {
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-	viper.SetConfigName("device")
+	viper.SetConfigName("brickd")
 	viper.SetConfigType("json")
+	viper.AddConfigPath("/etc/brickd")
 	viper.AddConfigPath(".")
 
 	if err := viper.ReadInConfig(); err != nil {
@@ -69,10 +71,10 @@ func main() {
 	L := logrus.NewEntry(logrus.StandardLogger()).WithContext(ctx)
 
 	listedConfig, _ := json.MarshalIndent(viper.AllSettings(), "", "  ")
-	L.Infof("Starting gateway with configuration: %s", listedConfig)
+	L.Infof("Starting httpgateway with configuration: %s", listedConfig)
 
-	mqttClient := client.NewClient(
-		L.WithField("Component", "MQTT Client"),
+	googClient, err := goog.NewConn(
+		L.WithField("Component", "MQTT Conn"),
 		viper.GetString(ProjectKey),
 		viper.GetString(RegionKey),
 		viper.GetString(RegistryKey),
@@ -80,15 +82,18 @@ func main() {
 		viper.GetString(PrivateKeyKey),
 		viper.GetString(RootCAKey),
 	)
-
-	err = mqttClient.Connect(ctx)
 	if err != nil {
-		L.Error("An error occured during mqtt client connection: ", err)
+		L.Error("An error occured during mqtt brickd initialization: ", err)
 	}
 
-	gateway := client.NewGateway(
+	err = googClient.Connect(ctx)
+	if err != nil {
+		L.Error("An error occured during mqtt brickd connection: ", err)
+	}
+
+	gateway := httpgateway.New(
 		L.WithField("Component", "Gateway"),
-		mqttClient,
+		googClient,
 	)
 
 	if err = gateway.RunHTTP(ctx); err != nil {

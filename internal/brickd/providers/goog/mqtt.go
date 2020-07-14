@@ -1,10 +1,11 @@
-package client
+package goog
 
 import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"io/ioutil"
 	"time"
 )
@@ -36,9 +37,9 @@ func GoogleClientID(projectID, region, registryID, gatewayId string) string {
 	)
 }
 
-func GoogleTLSConfig(rootca string) *tls.Config {
+func GoogleTLSConfig(rootCAPath string) *tls.Config {
 	certpool := x509.NewCertPool()
-	pemCerts, err := ioutil.ReadFile(rootca)
+	pemCerts, err := ioutil.ReadFile(rootCAPath)
 	if err != nil {
 		panic(err)
 	}
@@ -64,12 +65,57 @@ func GoogleMqttEventsTopic(deviceId string) string {
 	return GoogleMqttTopic(deviceId, "events")
 }
 
+func PublishEvent(c mqtt.Client, deviceId string, msg []byte) error {
+	token := c.Publish(
+		GoogleMqttEventsTopic(deviceId),
+		1,
+		false,
+		msg,
+	)
+
+	if token.WaitTimeout(time.Second*5) == false || token.Error() != nil {
+		return token.Error()
+	}
+
+	return nil
+}
+
 func GoogleMqttAttachTopic(deviceId string) string {
 	return GoogleMqttTopic(deviceId, "attach")
 }
 
+func GoogleAttachDevice(c mqtt.Client, deviceId string) error {
+	token := c.Publish(
+		GoogleMqttAttachTopic(deviceId),
+		1,
+		false,
+		"{}",
+	)
+
+	if token.WaitTimeout(time.Second*5) == false || token.Error() != nil {
+		return token.Error()
+	}
+
+	return nil
+}
+
 func GoogleMqttDetachTopic(deviceId string) string {
 	return GoogleMqttTopic(deviceId, "detach")
+}
+
+func GoogleDetachDevice(c mqtt.Client, deviceId string) error {
+	token := c.Publish(
+		GoogleMqttDetachTopic(deviceId),
+		1,
+		false,
+		"{}",
+	)
+
+	if token.WaitTimeout(time.Second*5) == false || token.Error() != nil {
+		return token.Error()
+	}
+
+	return nil
 }
 
 func GoogleMqttCommandsTopic(deviceId string) string {
