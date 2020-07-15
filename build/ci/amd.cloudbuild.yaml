@@ -6,8 +6,8 @@ steps:
       - -ldflags
       - '-w'
       - '-o'
-      - bin/gateway-$TAG_NAME-linux-amd64
-      - ./cmd/gateway
+      - bin/brickd-$TAG_NAME-linux-amd64
+      - ./cmd/brickd
     env:
       - 'GO111MODULE=on'
       - 'GOOS=linux'

@@ -6,8 +6,8 @@ steps:
       - -ldflags
       - '-w'
       - '-o'
-      - bin/gateway-$TAG_NAME-linux-arm
-      - ./cmd/gateway
+      - bin/brickd-$TAG_NAME-linux-arm
+      - ./cmd/brickd
     env:
       - 'GO111MODULE=on'
       - 'GOOS=linux'
