@@ -45,8 +45,8 @@ func main() {
 	listedConfig, _ := json.MarshalIndent(viper.AllSettings(), "", "  ")
 	L.Infof("Starting httpgateway with configuration: %s", listedConfig)
 
-	googClient, err := goog.NewConnFromConfig(
-		L.WithField("Component", "MQTT Conn"),
+	googClient, err := goog.NewAgentFromConfig(
+		L.WithField("Component", "MQTT Agent"),
 	)
 	if err != nil {
 		L.Error("An error occured during mqtt brickd initialization: ", err)

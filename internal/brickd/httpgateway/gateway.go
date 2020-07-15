@@ -11,10 +11,10 @@ import (
 type Gateway struct {
 	*logrus.Entry
 
-	client brickd.Conn
+	client brickd.Agent
 }
 
-func New(l *logrus.Entry, client brickd.Conn) *Gateway {
+func New(l *logrus.Entry, client brickd.Agent) *Gateway {
 	return &Gateway{
 		Entry:  l,
 		client: client,

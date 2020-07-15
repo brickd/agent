@@ -2,7 +2,7 @@ package brickd
 
 import "context"
 
-type Conn interface {
+type Agent interface {
 	Connect(ctx context.Context) error
 
 	Publish(msg []byte) error
@@ -21,4 +21,4 @@ type Conn interface {
 	WatchCommandsAs(ctx context.Context, deviceID string) (<-chan []byte, error)
 }
 
-type ConnOptionsFunc func(m *Conn)
+type ConnOptionsFunc func(m *Agent)

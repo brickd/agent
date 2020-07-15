@@ -14,7 +14,7 @@ const (
 	MQTTConnectionDefault = "ssl://mqtt.googleapis.com:8883"
 )
 
-type Conn struct {
+type Agent struct {
 	*logrus.Entry
 
 	ClientId  string
@@ -30,7 +30,7 @@ type Conn struct {
 	client mqtt.Client
 }
 
-func NewConn(L *logrus.Entry, projectId, region, registryID, gatewayID, pkeyPath, rootCAPath string) (brickd.Conn, error) {
+func NewAgent(L *logrus.Entry, projectId, region, registryID, gatewayID, pkeyPath, rootCAPath string) (brickd.Agent, error) {
 	clientID := GoogleClientID(projectId, region, registryID, gatewayID)
 
 	password, err := GoogleMQTTPassword(projectId, pkeyPath)
@@ -40,7 +40,7 @@ func NewConn(L *logrus.Entry, projectId, region, registryID, gatewayID, pkeyPath
 
 	tlsConf := GoogleTLSConfig(rootCAPath)
 
-	return &Conn{
+	return &Agent{
 		Entry:     L,
 		ClientId:  clientID,
 		Password:  password,
@@ -49,8 +49,8 @@ func NewConn(L *logrus.Entry, projectId, region, registryID, gatewayID, pkeyPath
 	}, nil
 }
 
-func NewConnFromConfig(L *logrus.Entry) (brickd.Conn, error) {
-	return NewConn(
+func NewAgentFromConfig(L *logrus.Entry) (brickd.Agent, error) {
+	return NewAgent(
 		L,
 		viper.GetString(GCPProjectIDKey),
 		viper.GetString(RegionKey),
@@ -61,7 +61,7 @@ func NewConnFromConfig(L *logrus.Entry) (brickd.Conn, error) {
 	)
 }
 
-func (m *Conn) Connect(ctx context.Context) error {
+func (m *Agent) Connect(ctx context.Context) error {
 	opts := mqtt.NewClientOptions().
 		AddBroker(MQTTConnectionDefault).
 		SetTLSConfig(m.TLSConfig).
@@ -83,42 +83,42 @@ func (m *Conn) Connect(ctx context.Context) error {
 	return nil
 }
 
-func (m *Conn) Publish(msg []byte) error {
+func (m *Agent) Publish(msg []byte) error {
 	return PublishEvent(m.client, m.gatewayID, msg)
 }
 
-func (m *Conn) PublishAs(deviceID string, msg []byte) error {
+func (m *Agent) PublishAs(deviceID string, msg []byte) error {
 	return PublishEvent(m.client, deviceID, msg)
 }
 
-func (m *Conn) Attach(deviceID string) error {
+func (m *Agent) Attach(deviceID string) error {
 	return AttachDevice(m.client, deviceID)
 }
 
-func (m *Conn) Detach(deviceID string) error {
+func (m *Agent) Detach(deviceID string) error {
 	return DetachDevice(m.client, deviceID)
 }
 
-func (m *Conn) SetState(state []byte) error {
+func (m *Agent) SetState(state []byte) error {
 	return SetDeviceState(m.client, m.gatewayID, state)
 }
 
-func (m *Conn) SetStateAs(deviceID string, state []byte) error {
+func (m *Agent) SetStateAs(deviceID string, state []byte) error {
 	return SetDeviceState(m.client, deviceID, state)
 }
 
-func (m *Conn) WatchConfig(ctx context.Context) (<-chan []byte, error) {
+func (m *Agent) WatchConfig(ctx context.Context) (<-chan []byte, error) {
 	return WatchDeviceConfig(ctx, m.client, m.gatewayID)
 }
 
-func (m *Conn) WatchConfigAs(ctx context.Context, deviceID string) (<-chan []byte, error) {
+func (m *Agent) WatchConfigAs(ctx context.Context, deviceID string) (<-chan []byte, error) {
 	return WatchDeviceConfig(ctx, m.client, deviceID)
 }
 
-func (m *Conn) WatchCommands(ctx context.Context) (<-chan []byte, error) {
+func (m *Agent) WatchCommands(ctx context.Context) (<-chan []byte, error) {
 	return WatchDeviceCommands(ctx, m.client, m.gatewayID)
 }
 
-func (m *Conn) WatchCommandsAs(ctx context.Context, deviceID string) (<-chan []byte, error) {
+func (m *Agent) WatchCommandsAs(ctx context.Context, deviceID string) (<-chan []byte, error) {
 	return WatchDeviceCommands(ctx, m.client, deviceID)
 }
