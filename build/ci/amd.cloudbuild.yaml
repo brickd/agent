@@ -1,5 +1,5 @@
 steps:
-  - name: go
+  - name: gcr.io/cloud-builders/go
     args:
       - build
       - -ldflags
@@ -10,7 +10,7 @@ steps:
     env:
       - 'GOOS=linux'
       - 'GOARCH=amd64'
-  - name: gsutil
+  - name: gcr.io/cloud-builders/gsutil
     args:
       - cp
       - bin/*
