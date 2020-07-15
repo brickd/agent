@@ -4,6 +4,6 @@ options:
     - 'DOCKER_REPO_OVERRIDE=eu.gcr.io/${PROJECT_ID}'
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '--tag=gcr.io/$PROJECT_ID/ko', '-f', 'infrastructure/ko.Dockerfile', 'infrastructure/']
+    args: ['build', '--tag=gcr.io/$PROJECT_ID/ko', '-f', 'build/package/ko.Dockerfile', './build/ci']
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/ko']
