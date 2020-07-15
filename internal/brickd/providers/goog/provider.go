@@ -83,6 +83,11 @@ func (m *Agent) Connect(ctx context.Context) error {
 	return nil
 }
 
+func (m *Agent) Disconnect(ctx context.Context, waitms uint) error {
+	m.client.Disconnect(waitms)
+	return nil
+}
+
 func (m *Agent) Publish(msg []byte) error {
 	return PublishEvent(m.client, m.gatewayID, msg)
 }

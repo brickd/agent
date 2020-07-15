@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 )
 
@@ -57,7 +58,7 @@ func main() {
 		L.Error("An error occured during mqtt brickd connection: ", err)
 	}
 
-	watchContext, watchCancel := context.WithCancel(ctx)
+	watchContext, cancelWatch := context.WithCancel(ctx)
 	configs, err := googClient.WatchConfig(watchContext)
 	if err != nil {
 		L.Error("Failed to read config of the device: ", err)
@@ -67,12 +68,17 @@ func main() {
 	if err != nil {
 		L.Error("Config could not be parsed: ", err)
 	}
-	watchCancel()
+	cancelWatch()
+
+	err = googClient.Disconnect(ctx, 0)
+	if err != nil {
+		L.Error("Disconnect failed: ", err)
+	}
 
 	runContext, _ := context.WithCancel(context.Background())
 
 	for _, c := range cfg.Components {
-		L.Info("Checking component ", c.Name)
+		L.Info("[", c.Name, "] checking")
 		err = CheckComponent(runContext, c)
 		if err != nil {
 			L.Error("Component check failed with: ", err)
@@ -80,26 +86,38 @@ func main() {
 	}
 
 	for _, c := range cfg.Components {
-		RunComponent(runContext, c)
+		if c.Runnable {
+			err := RunComponent(runContext, c)
+			if err != nil {
+				L.Error("Component run failed with: ", err)
+			}
+		}
 	}
 }
 
 func CheckComponent(ctx context.Context, c brickd.Component) error {
-	if !fileExists(filepath.Join(BrickDFolder, c.Name)) {
-		L.Info("Component ", c.Name, " does not exist, downloading")
+	if !fileExists(filepath.Join(BrickDFolder, c.HashName())) {
+		L.Info("[", c.Name, "] does not exist, downloading")
 		err := DownloadComponent(ctx, c)
 		if err != nil {
 			return err
 		}
 	}
 
-	L.Info("Component ", c.Name, " checked")
+	L.Info("[", c.Name, "] checked")
 
 	return nil
 }
 
-func RunComponent(ctx context.Context, c brickd.Component) <-chan error {
-	return nil
+func RunComponent(ctx context.Context, c brickd.Component) error {
+	L.Info("[", c.Name, "] is runnable, bootstrapping")
+	cmd := exec.CommandContext(ctx, filepath.Join(BrickDFolder, c.HashName()))
+	cmd.Stdout = L.Writer()
+	cmd.Stderr = L.Writer()
+
+	L.Info("[", c.Name, "] Starting component")
+
+	return cmd.Run()
 }
 
 func DownloadComponent(ctx context.Context, c brickd.Component) error {
@@ -114,7 +132,7 @@ func DownloadComponent(ctx context.Context, c brickd.Component) error {
 	}
 
 	return ioutil.WriteFile(
-		filepath.Join(BrickDFolder, c.Hash()),
+		filepath.Join(BrickDFolder, c.HashName()),
 		bb,
 		os.ModePerm,
 	)

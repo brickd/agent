@@ -37,6 +37,8 @@ func (g *Gateway) RunHTTP(ctx context.Context) error {
 			return
 		}
 
+		g.Debug("A message was received: ", string(bb))
+
 		err = g.client.Publish(bb)
 		if err != nil {
 			g.Error("An error occured when publishing message:", err)

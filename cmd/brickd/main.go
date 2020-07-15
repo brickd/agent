@@ -8,6 +8,7 @@ import (
 	"github.com/brickd/agent/internal/brickd/providers/goog"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"os"
 )
 
 func main() {
@@ -18,6 +19,8 @@ func main() {
 
 	ctx := context.Background()
 	L := logrus.NewEntry(logrus.StandardLogger()).WithContext(ctx)
+
+	L.Info("Starting with args: ", os.Args)
 
 	listedConfig, _ := json.MarshalIndent(viper.AllSettings(), "", "  ")
 	L.Infof("Starting httpgateway with configuration: %s", listedConfig)

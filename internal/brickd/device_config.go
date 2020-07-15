@@ -18,6 +18,7 @@ type Component struct {
 
 	Runnable bool     `json:"runnable"`
 	Args     []string `json:"args"`
+	Env      []string `json:"env"`
 }
 
 func ParseDeviceConfig(bb []byte) (DeviceConfig, error) {
@@ -27,7 +28,7 @@ func ParseDeviceConfig(bb []byte) (DeviceConfig, error) {
 	return cfg, err
 }
 
-func (c Component) Hash() string {
+func (c Component) HashName() string {
 	h := md5.New()
 	h.Write([]byte(c.Name + c.Source + c.Version))
 

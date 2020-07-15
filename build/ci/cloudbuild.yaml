@@ -13,4 +13,4 @@ steps:
     args:
       - publish
       - -P
-      - ./cmd/launcher
+      - ./cmd/brickd-launcher

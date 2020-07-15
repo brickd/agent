@@ -4,6 +4,7 @@ import "context"
 
 type Agent interface {
 	Connect(ctx context.Context) error
+	Disconnect(ctx context.Context, waitms uint) error
 
 	Publish(msg []byte) error
 	PublishAs(deviceID string, msg []byte) error

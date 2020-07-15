@@ -13,6 +13,20 @@ steps:
       - 'GOOS=linux'
       - 'GOARCH=arm'
       - 'GOARM=5'
+  - name: golang
+    entrypoint: 'go'
+    args:
+      - build
+      - -ldflags
+      - '-w'
+      - '-o'
+      - bin/brickd-launcher-$TAG_NAME-linux-arm
+      - ./cmd/brickd-launcher
+    env:
+      - 'GO111MODULE=on'
+      - 'GOOS=linux'
+      - 'GOARCH=arm'
+      - 'GOARM=5'
   - name: gcr.io/cloud-builders/gsutil
     args:
       - cp
