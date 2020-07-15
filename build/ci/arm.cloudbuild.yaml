@@ -8,6 +8,7 @@ steps:
       - bin/gateway-$TAG_NAME-linux-arm
       - ./cmd/gateway
     env:
+      - 'GO111MODULE=on'
       - 'GOOS=linux'
       - 'GOARCH=arm'
       - 'GOARM=5'
