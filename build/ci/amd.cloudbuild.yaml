@@ -1,5 +1,5 @@
 steps:
-  - name: gcr.io/cloud-builders/go
+  - name: golang
     args:
       - build
       - -ldflags
