@@ -1,0 +1,18 @@
+steps:
+  - name: go
+    args:
+      - build
+      - -ldflags
+      - '-w'
+      - '-o'
+      - bin/gateway-$TAG_NAME-linux-arm
+      - ./cmd/gateway
+    env:
+      - 'GOOS=linux'
+      - 'GOARCH=arm'
+      - 'GOARM=5'
+  - name: gsutil
+    args:
+      - cp
+      - bin/*
+      - gs://brickd-artifacts

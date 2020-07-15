@@ -1,0 +1,17 @@
+steps:
+  - name: go
+    args:
+      - build
+      - -ldflags
+      - '-w'
+      - '-o'
+      - bin/gateway-$TAG_NAME-linux-amd64
+      - ./cmd/gateway
+    env:
+      - 'GOOS=linux'
+      - 'GOARCH=amd64'
+  - name: gsutil
+    args:
+      - cp
+      - bin/*
+      - gs://brickd-artifacts
