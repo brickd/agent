@@ -142,42 +142,66 @@ func GoogleMqttCommandsTopic(deviceID string) string {
 	return GoogleMqttTopic(deviceID, "commands/#")
 }
 
-func WatchDeviceCommands(ctx context.Context, c mqtt.Client, deviceID string, commands chan<- []byte) error {
+func WatchDeviceCommands(ctx context.Context, c mqtt.Client, deviceID string) (<-chan []byte, error) {
+	// the subscriber may be called even after the unsubscribe due to buffered
+	// messages, this will prevent the send on the closed channel
+	done := false
+	commands := make(chan []byte)
+
 	token := c.Subscribe(GoogleMqttCommandsTopic(deviceID), 0, func(client mqtt.Client, m mqtt.Message) {
+		if done {
+			return
+		}
+
 		select {
 		case commands <- m.Payload():
 		default:
 			// unsubscribe from the topic if the channel is closed
 			c.Unsubscribe(GoogleMqttCommandsTopic(deviceID))
+
+			done = true
+			close(commands)
 			return
 		}
 	})
 
 	if token.WaitTimeout(time.Second*5) == false || token.Error() != nil {
-		return token.Error()
+		return nil, token.Error()
 	}
 
-	return nil
+	return commands, nil
 }
 
 func GoogleMqttConfigTopic(deviceID string) string {
 	return GoogleMqttTopic(deviceID, "config")
 }
 
-func WatchDeviceConfig(ctx context.Context, c mqtt.Client, deviceID string, configs chan<- []byte) error {
+func WatchDeviceConfig(ctx context.Context, c mqtt.Client, deviceID string) (<-chan []byte, error) {
+	// the subscriber may be called even after the unsubscribe due to buffered
+	// messages, this will prevent the send on the closed channel
+	done := false
+	configs := make(chan []byte)
+
 	token := c.Subscribe(GoogleMqttConfigTopic(deviceID), 1, func(client mqtt.Client, m mqtt.Message) {
+		if done {
+			return
+		}
+
 		select {
-		case configs <- m.Payload():
-		default:
+		case <-ctx.Done():
 			// unsubscribe from the topic if the channel is closed
 			c.Unsubscribe(GoogleMqttConfigTopic(deviceID))
+
+			done = true
+			close(configs)
 			return
+		case configs <- m.Payload():
 		}
 	})
 
 	if token.WaitTimeout(time.Second*5) == false || token.Error() != nil {
-		return token.Error()
+		return nil, token.Error()
 	}
 
-	return nil
+	return configs, nil
 }

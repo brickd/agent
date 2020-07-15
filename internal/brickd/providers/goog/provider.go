@@ -107,18 +107,18 @@ func (m *Conn) SetStateAs(deviceID string, state []byte) error {
 	return SetDeviceState(m.client, deviceID, state)
 }
 
-func (m *Conn) WatchConfig(ctx context.Context, configs chan<- []byte) error {
-	return WatchDeviceConfig(ctx, m.client, m.gatewayID, configs)
+func (m *Conn) WatchConfig(ctx context.Context) (<-chan []byte, error) {
+	return WatchDeviceConfig(ctx, m.client, m.gatewayID)
 }
 
-func (m *Conn) WatchConfigAs(ctx context.Context, deviceID string, configs chan<- []byte) error {
-	return WatchDeviceConfig(ctx, m.client, deviceID, configs)
+func (m *Conn) WatchConfigAs(ctx context.Context, deviceID string) (<-chan []byte, error) {
+	return WatchDeviceConfig(ctx, m.client, deviceID)
 }
 
-func (m *Conn) WatchCommands(ctx context.Context, commands chan<- []byte) error {
-	return WatchDeviceCommands(ctx, m.client, m.gatewayID, commands)
+func (m *Conn) WatchCommands(ctx context.Context) (<-chan []byte, error) {
+	return WatchDeviceCommands(ctx, m.client, m.gatewayID)
 }
 
-func (m *Conn) WatchCommandsAs(ctx context.Context, deviceID string, commands chan<- []byte) error {
-	return WatchDeviceCommands(ctx, m.client, deviceID, commands)
+func (m *Conn) WatchCommandsAs(ctx context.Context, deviceID string) (<-chan []byte, error) {
+	return WatchDeviceCommands(ctx, m.client, deviceID)
 }

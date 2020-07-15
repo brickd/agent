@@ -14,11 +14,11 @@ type Conn interface {
 	SetState(state []byte) error
 	SetStateAs(deviceID string, state []byte) error
 
-	WatchConfig(ctx context.Context, configs chan<- []byte) error
-	WatchConfigAs(ctx context.Context, deviceID string, configs chan<- []byte) error
+	WatchConfig(ctx context.Context) (<-chan []byte, error)
+	WatchConfigAs(ctx context.Context, deviceID string) (<-chan []byte, error)
 
-	WatchCommands(ctx context.Context, commands chan<- []byte) error
-	WatchCommandsAs(ctx context.Context, deviceID string, commands chan<- []byte) error
+	WatchCommands(ctx context.Context) (<-chan []byte, error)
+	WatchCommandsAs(ctx context.Context, deviceID string) (<-chan []byte, error)
 }
 
 type ConnOptionsFunc func(m *Conn)

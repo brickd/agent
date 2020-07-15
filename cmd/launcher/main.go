@@ -57,8 +57,8 @@ func main() {
 		L.Error("An error occured during mqtt brickd connection: ", err)
 	}
 
-	configs := make(chan []byte)
-	err = googClient.WatchConfig(ctx, configs)
+	watchContext, watchCancel := context.WithCancel(ctx)
+	configs, err := googClient.WatchConfig(watchContext)
 	if err != nil {
 		L.Error("Failed to read config of the device: ", err)
 	}
@@ -67,12 +67,12 @@ func main() {
 	if err != nil {
 		L.Error("Config could not be parsed: ", err)
 	}
-	close(configs)
+	watchCancel()
 
 	runContext, _ := context.WithCancel(context.Background())
 
 	for _, c := range cfg.Components {
-		L.Info("Checking component", c.Name)
+		L.Info("Checking component ", c.Name)
 		err = CheckComponent(runContext, c)
 		if err != nil {
 			L.Error("Component check failed with: ", err)
@@ -113,7 +113,11 @@ func DownloadComponent(ctx context.Context, c brickd.Component) error {
 		return err
 	}
 
-	return ioutil.WriteFile(filepath.Join(BrickDFolder, c.Name), bb, os.ModePerm)
+	return ioutil.WriteFile(
+		filepath.Join(BrickDFolder, c.Hash()),
+		bb,
+		os.ModePerm,
+	)
 }
 
 func fileExists(filename string) bool {
